@@ -2,6 +2,26 @@ import pygame
 import sys
 import math
 import time
+import os
+
+def read_scores(file):
+    if not os.path.exists(file):
+        return []
+    with open(file, 'r') as f:
+        scores = f.readlines()
+    return [float(score.strip()) for score in scores]
+
+def write_scores(file, scores):
+    with open(file, 'w') as f:
+        for score in scores:
+            f.write(f"{score}\n")
+
+def update_scores(file, new_time):
+    scores = read_scores(file)
+    scores.append(new_time)
+    scores = sorted(scores)[:10]  # Garder seulement les 10 meilleurs temps
+    write_scores(file, scores)
+    return scores
 
 # Initialisation de Pygame
 pygame.init()
@@ -37,7 +57,7 @@ track_data = {
         "car_y": 880,
         "information_text_position": (10, 10),
         "score_file": "scores_spa.txt",
-        "best_time" : float('inf')  # Meilleur temps initialisé à l'infini
+        "best_time" : min(read_scores("scores_spa.txt"), default=float("inf"))  # Meilleur temps du circuit
     },
     "ovale": {
         "start_line_rect": pygame.Rect(992, 840, 10, 210),
@@ -45,7 +65,7 @@ track_data = {
         "car_y": 940,
         "information_text_position": (700, 450),
         "score_file": "scores_ovale.txt",
-        "best_time" : float('inf')  # Meilleur temps initialisé à l'infini
+        "best_time" : min(read_scores("scores_ovale.txt"), default=float("inf")) # Meilleur temps du circuit
     }
 }
 
@@ -83,17 +103,20 @@ def draw_car(x, y, angle):
     screen.blit(rotated_car, rect.topleft)
     return rect
 
-# Fonction pour afficher le message de fin de jeu avec le meilleur temps et un bouton de relance
-def show_game_over(selected_track,best_time):
+def show_game_over(selected_track, best_time):
     global last_lap_time
 
+    scores = read_scores(track_data[selected_track]["score_file"])
     font = pygame.font.Font(None, 74)
     text = font.render("Game Over", True, red)
-    if best_time == float('inf') :
-        best_time_text = font.render(f"No Lap Time",True, white)
-    else :
+
+    if best_time == float('inf'):
+        best_time_text = font.render(f"No Lap Time", True, white)
+    else:
         best_time_text = font.render(f"Best Lap Time: {best_time:.2f}s", True, white)
-    
+
+    score_texts = [font.render(f"{i + 1}. {time:.2f}s", True, white) for i, time in enumerate(scores)]
+
     play_again_button = Button("Rejouer", screen_width // 2 - 100, screen_height // 2 + 100, 200, 50, green, green_launcher, lambda: reset_game(selected_track))
     quit_button = Button("Quitter", screen_width // 2 - 100, screen_height // 2 + 200, 200, 50, green, green_launcher, quit_game)
     change_track_button = Button("Choisir un circuit", screen_width // 2 - 125, screen_height // 2 + 300, 250, 50, green, green_launcher, show_track_selection)
@@ -112,17 +135,21 @@ def show_game_over(selected_track,best_time):
         if keys[pygame.K_RETURN]:
             reset_game(selected_track)
 
-        if keys[pygame.K_ESCAPE] :
+        if keys[pygame.K_ESCAPE]:
             quit_game()
-        
 
         screen.fill(black)
         screen.blit(text, (screen_width / 2 - text.get_width() / 2, screen_height / 2 - text.get_height() / 2))
-        screen.blit(best_time_text, (screen_width / 2 - best_time_text.get_width() / 2, screen_height // 2 - 100 ))
+        screen.blit(best_time_text, (screen_width / 2 - best_time_text.get_width() / 2, screen_height // 2 - 100))
+
+        for i, score_text in enumerate(score_texts):
+            screen.blit(score_text, (screen_width // 2 - score_text.get_width() / 2 + 300, screen_height // 2 + (i + 1) * 40 - 90))
+
         play_again_button.draw(screen)
         quit_button.draw(screen)
         change_track_button.draw(screen)
         pygame.display.flip()
+
 
         
 
@@ -191,7 +218,8 @@ def quit_game():
 
 # Fonction pour réinitialiser le jeu
 def reset_game(selected_track):
-    global car_x, car_y, car_angle, car_speed, lap_count, crossed_line, start_time, last_lap_time, current_lap_time, previous_car_x
+    global car_x, car_y, car_angle, car_speed, lap_count, crossed_line, start_time, last_lap_time, current_lap_time, previous_car_x, best_time
+
     car_x = track_data[selected_track]["car_x"]
     car_y = track_data[selected_track]["car_y"]
     car_angle = 90
@@ -202,7 +230,10 @@ def reset_game(selected_track):
     last_lap_time = 0
     current_lap_time = 0
     previous_car_x = car_x
+    best_time = min(read_scores(track_data[selected_track]["score_file"]), default=float('inf'))
+
     game_loop(selected_track)
+
 
 # Fonction principale du jeu
 def game_loop(selected_track):
@@ -221,8 +252,9 @@ def game_loop(selected_track):
     start_time = time.time()
     last_lap_time = 0
     current_lap_time = 0
-    best_time = track_data[selected_track]["best_time"]
-
+    scores = read_scores(track_data[selected_track]["score_file"])
+    best_time = min(scores, default=float('inf'))
+    
     clock = pygame.time.Clock()
     game_exit = False
 
@@ -288,17 +320,16 @@ def game_loop(selected_track):
             if not crossed_line:
                 if lap_count > 0:  # Ne pas afficher le temps du tour avant le premier tour complet
                     last_lap_time = current_lap_time
-                    # Mettre à jour le meilleur temps
-                    if last_lap_time > 0 and last_lap_time < best_time:
-                        best_time = last_lap_time
+                    if last_lap_time > 0 and car_x < previous_car_x :
+                        # Mettre à jour le meilleur temps
+                        update_scores(track_data[selected_track]["score_file"], last_lap_time)
                 start_time = time.time()
                 lap_count += 1
                 crossed_line = True
             # Vérifier si la voiture franchit la ligne de droite à gauche pour game over
             elif car_x > previous_car_x:  # La voiture franchit la ligne de droite à gauche
                 last_lap_time = 0
-                best_time = float("inf")
-                show_game_over(selected_track,best_time)
+                show_game_over(selected_track, best_time)
                 game_exit = True
         else:
             crossed_line = False
@@ -314,10 +345,10 @@ def game_loop(selected_track):
             show_menu_options()
 
         # Dessiner la ligne de départ/arrivée (commentée pour être invisible)
-        # pygame.draw.rect(screen, red, start_line_rect)
+        #pygame.draw.rect(screen, red, start_line_rect)
 
         pygame.display.update()
-        clock.tick(60000)
+        clock.tick(6000)
 
 # Fonction pour afficher l'écran de lancement
 def show_launcher():
@@ -388,3 +419,4 @@ def show_track_selection():
 
 # Lancer l'écran de lancement
 show_launcher()
+
