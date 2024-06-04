@@ -317,7 +317,7 @@ def game_loop(selected_track):
         # pygame.draw.rect(screen, red, start_line_rect)
 
         pygame.display.update()
-        clock.tick(600)
+        clock.tick(60000)
 
 # Fonction pour afficher l'écran de lancement
 def show_launcher():
