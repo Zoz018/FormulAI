@@ -39,6 +39,7 @@ green = (0, 71, 0)  # Couleur des bords du circuit pour la détection des collis
 yellow = (239, 228, 176)  # Couleur du sable
 green_launcher = (144, 238, 144)  # Couleur de fond du launcher
 black = (0, 0, 0)
+brown = (120,67,21)
 
 # Charger les images de voitures et de circuits
 car_image = pygame.image.load('car.png')
@@ -323,7 +324,7 @@ def game_loop(selected_track):
                 deceleration = sand_deceleration
             else:
                 deceleration = base_deceleration
-            if track_images[selected_track].get_at((int(car_x), int(car_y))) == green:
+            if track_images[selected_track].get_at((int(car_x), int(car_y))) == green or track_images[selected_track].get_at((int(car_x), int(car_y))) == brown:
                 show_game_over(selected_track,best_time)
                 game_exit = True
         except IndexError:
