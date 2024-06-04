@@ -36,6 +36,7 @@ pygame.display.set_caption('Jeu de Formule 1')
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 71, 0)  # Couleur des bords du circuit pour la détection des collisions
+yellow = (239, 228, 176)  # Couleur du sable
 green_launcher = (144, 238, 144)  # Couleur de fond du launcher
 black = (0, 0, 0)
 
@@ -44,7 +45,8 @@ car_image = pygame.image.load('car.png')
 car_image = pygame.transform.scale(car_image, (12.5, 25))
 track_images = {
     "spa": pygame.image.load('circuit_spa.png'),
-    "ovale": pygame.image.load('circuit_ovale.png')
+    "ovale": pygame.image.load('circuit_ovale.png'),
+    "ovale+sable": pygame.image.load('circuit_ovale_sable.png')
 }
 for key in track_images:
     track_images[key] = pygame.transform.scale(track_images[key], (1920, 1080))
@@ -66,6 +68,14 @@ track_data = {
         "information_text_position": (700, 450),
         "score_file": "scores_ovale.txt",
         "best_time" : min(read_scores("scores_ovale.txt"), default=float("inf")) # Meilleur temps du circuit
+    },
+    "ovale+sable": {
+        "start_line_rect": pygame.Rect(992, 840, 10, 210),
+        "car_x": 900,
+        "car_y": 840,
+        "information_text_position": (700, 450),
+        "score_file": "scores_ovale_sable.txt",
+        "best_time" : min(read_scores("scores_ovale_sable.txt"), default=float("inf")) # Meilleur temps du circuit
     }
 }
 
@@ -79,7 +89,7 @@ car_speed = 0
 max_speed = 30
 acceleration = 0.5
 base_deceleration = 0.1  # Décélération de base
-sand_deceleration = 0.5  # Décélération dans le sable
+sand_deceleration = 0.4  # Décélération dans le sable
 brake_deceleration = 1
 base_turn_speed = 7
 
@@ -276,11 +286,11 @@ def game_loop(selected_track):
             car_speed -= brake_deceleration
             if car_speed < 0:
                 car_speed = 0
-        else:
-            # Appliquer une décélération dépendant de la vitesse actuelle (frottements)
-            car_speed -= deceleration + (car_speed / max_speed) * deceleration
-            if car_speed < 0:
-                car_speed = 0
+        
+        # Appliquer une décélération dépendant de la vitesse actuelle (frottements)
+        car_speed -= deceleration + (car_speed / max_speed) * deceleration
+        if car_speed < 0:
+            car_speed = 0
 
         # Calcul de la vitesse de rotation en fonction de la vitesse de la voiture
         turn_speed = base_turn_speed * (1.5 - car_speed / max_speed)
@@ -313,9 +323,9 @@ def game_loop(selected_track):
                 deceleration = sand_deceleration
             else:
                 deceleration = base_deceleration
-            if track_images[selected_track].get_at((int(car_x), int(car_y))) == green:
-                show_game_over(selected_track,best_time)
-                game_exit = True
+            #if track_images[selected_track].get_at((int(car_x), int(car_y))) == green:
+             #   show_game_over(selected_track,best_time)
+              #  game_exit = True
         except IndexError:
             pass
 
