@@ -70,10 +70,10 @@ track_data = {
         "best_time" : min(read_scores("scores_ovale.txt"), default=float("inf")) # Meilleur temps du circuit
     },
     "ovale+sable": {
-        "start_line_rect": pygame.Rect(992, 840, 10, 210),
-        "car_x": 900,
-        "car_y": 840,
-        "information_text_position": (700, 450),
+        "start_line_rect": pygame.Rect(935, 700, 10, 265),
+        "car_x": 1000,
+        "car_y": 800,
+        "information_text_position": (700, 350),
         "score_file": "scores_ovale_sable.txt",
         "best_time" : min(read_scores("scores_ovale_sable.txt"), default=float("inf")) # Meilleur temps du circuit
     }
@@ -323,9 +323,9 @@ def game_loop(selected_track):
                 deceleration = sand_deceleration
             else:
                 deceleration = base_deceleration
-            #if track_images[selected_track].get_at((int(car_x), int(car_y))) == green:
-             #   show_game_over(selected_track,best_time)
-              #  game_exit = True
+            if track_images[selected_track].get_at((int(car_x), int(car_y))) == green:
+                show_game_over(selected_track,best_time)
+                game_exit = True
         except IndexError:
             pass
 
