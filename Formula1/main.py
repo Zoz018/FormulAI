@@ -79,6 +79,7 @@ car_speed = 0
 max_speed = 30
 acceleration = 0.5
 base_deceleration = 0.1  # Décélération de base
+sand_deceleration = 0.5  # Décélération dans le sable
 brake_deceleration = 1
 base_turn_speed = 7
 
@@ -258,7 +259,9 @@ def game_loop(selected_track):
     clock = pygame.time.Clock()
     game_exit = False
 
+    deceleration = base_deceleration
     while not game_exit:
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -275,7 +278,7 @@ def game_loop(selected_track):
                 car_speed = 0
         else:
             # Appliquer une décélération dépendant de la vitesse actuelle (frottements)
-            car_speed -= base_deceleration + (car_speed / max_speed) * base_deceleration
+            car_speed -= deceleration + (car_speed / max_speed) * deceleration
             if car_speed < 0:
                 car_speed = 0
 
@@ -306,6 +309,10 @@ def game_loop(selected_track):
 
         # Vérification des collisions avec les bords du circuit (vert)
         try:
+            if track_images[selected_track].get_at((int(car_x), int(car_y))) == yellow:
+                deceleration = sand_deceleration
+            else:
+                deceleration = base_deceleration
             if track_images[selected_track].get_at((int(car_x), int(car_y))) == green:
                 show_game_over(selected_track,best_time)
                 game_exit = True
