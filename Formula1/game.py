@@ -77,6 +77,11 @@ class FormulAI:
         self.start_time = time.time()
         self.current_lap_time = 0
         self.checkpoint = None
+
+        self.count = 0
+        self.last_time = 0
+        self.best_time = float("inf") 
+
     
     def play_step(self):
         # Récupérer les entrées de l'utilisateur
@@ -187,11 +192,30 @@ class FormulAI:
         self.screen.fill(WHITE)
         self.screen.blit(TRACK, (0, 0))
 
+        # Afficher les informations de la partie 
+        self._show_lap_info()
+
         # Dessiner la voiture orientée
         rotated_car = pygame.transform.rotate(CAR, self.car_angle)
         car_rect = rotated_car.get_rect(center=(self.car_x, self.car_y))
         self.screen.blit(rotated_car, car_rect.topleft)
         pygame.display.update()
+
+    # Fonction pour afficher le compteur de tours et le temps du tour précédent
+    def _show_lap_info(self): 
+        font = pygame.font.Font(None, 74)
+        text_laps = font.render(f"Laps: {self.count}", True, WHITE)
+        text_last_time = font.render(f"Last Lap Time: {self.last_time:.2f}s", True, WHITE)
+        text_current_time = font.render(f"Current Lap Time: {self.current_lap_time:.2f}s", True, WHITE)
+        if self.best_time == float('inf') :
+            text_best_time = font.render(f"No Lap Time",True, WHITE)
+        else :
+            text_best_time = font.render(f"Best Lap Time: {self.best_time:.2f}s", True, WHITE)
+        information_text_position = (700,450)
+        self.screen.blit(text_laps, information_text_position)
+        self.screen.blit(text_last_time, (information_text_position[0], information_text_position[1] + 80))
+        self.screen.blit(text_current_time, (information_text_position[0], information_text_position[1] + 160))
+        self.screen.blit(text_best_time, (information_text_position[0], information_text_position[1] + 240))
         
 if __name__ == '__main__':
     game = FormulAI()
