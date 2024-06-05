@@ -250,6 +250,21 @@ def reset_game(selected_track):
 
     game_loop(selected_track)
 
+#Vérifie si la position de la voiture est entre deux points.
+def is_between(car_pos, point1, point2):
+
+    def est_entre_valeurs(val_c,val_a, val_b):
+        return (val_a <= val_c <= val_b) or (val_b <= val_c <= val_a)
+
+    # Vérifier si la voiture est entre les coordonnées x des deux points
+    return est_entre_valeurs(car_pos[0], point1[0], point2[0]) and est_entre_valeurs(car_pos[1], point1[1], point2[1])
+
+# Fonction pour afficher le message de fin de jeu
+def show_checkpoint_collision():
+    font = pygame.font.Font(None, 74)
+    text = font.render("Checkpoint franchis", True, white)
+    screen.blit(text, (10, 10))
+        
 
 # Fonction principale du jeu
 def game_loop(selected_track):
@@ -376,7 +391,12 @@ def game_loop(selected_track):
             pygame.draw.line(screen, blue, checkpoints[1][0], checkpoints[1][1])
             pygame.draw.line(screen, blue, checkpoints[2][0], checkpoints[2][1])
             pygame.draw.line(screen, blue, checkpoints[3][0],checkpoints[3][1])
-
+            car_pos = (car_x,car_y)
+            checkpoint_collision = is_between(car_pos,checkpoints[0][0],checkpoints[0][1]) or is_between(car_pos, checkpoints[1][0], checkpoints[1][1]) or is_between(car_pos, checkpoints[2][0], checkpoints[2][1]) or is_between(car_pos, checkpoints[3][0], checkpoints[3][1])
+            if checkpoint_collision : 
+                show_checkpoint_collision()
+        
+            
         pygame.display.update()
         clock.tick(6000)
 
