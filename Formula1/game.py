@@ -16,14 +16,14 @@ class Acceleration(Enum):
 
 # Paramètres de la voiture
 MAX_SPEED = 30
-ACCELERATION = 0.12
+ACCELERATION = 0.5
 BASE_DECELERATION = 0.1
 SAND_DECELERATION = 0.4  # Décélération dans le sable
 BRAKE_DECELERATION = 1
 TURN_SPEED = 7
 
 #
-SPEED = 6000
+SPEED = 60
 
 # Couleurs
 WHITE = (255, 255, 255)
@@ -89,15 +89,14 @@ class FormulAI:
                     self.direction = Direction.LEFT
                 elif event.key == pygame.K_RIGHT:
                     self.direction = Direction.RIGHT
-                else:
-                    self.direction = Direction.STRAIGHT
 
                 if event.key == pygame.K_UP:
                     self.acceleration = Acceleration.ACCEL
                 elif event.key == pygame.K_DOWN:
                     self.acceleration = Acceleration.BRAKE
-                else:
-                    self.acceleration = Acceleration.BASE
+            else:
+                self.acceleration = Acceleration.BASE
+                self.direction = Direction.STRAIGHT
 
         action = (self.direction, self.acceleration)
         
@@ -153,7 +152,7 @@ class FormulAI:
             turn_speed = 1  # Valeur minimale pour une sensibilité de direction constante
         if self.car_speed == 0:
             turn_speed = 0
-        
+
         if action[0] == Direction.LEFT:
             turn_sign = 1
         elif action[0] == Direction.RIGHT:
@@ -183,9 +182,14 @@ class FormulAI:
         return False
 
     def _update_ui(self):
+        # Dessiner le circuit
+        self.screen.fill(WHITE)
+        self.screen.blit(TRACK, (0, 0))
+        
         # Dessiner la voiture orientée
         rotated_car = pygame.transform.rotate(CAR, self.car_angle)
-        self.screen.blit(rotated_car, (self.car_x, self.car_y))
+        car_rect = rotated_car.get_rect(center=(self.car_x, self.car_y))
+        self.screen.blit(rotated_car, car_rect.topleft)
         pygame.display.update()
         
 if __name__ == '__main__':
