@@ -84,19 +84,20 @@ class FormulAI:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    self.direction = Direction.LEFT
-                elif event.key == pygame.K_RIGHT:
-                    self.direction = Direction.RIGHT
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.direction = Direction.LEFT
+        elif keys[pygame.K_RIGHT]:
+            self.direction = Direction.RIGHT
+        else:
+            self.direction = Direction.STRAIGHT
 
-                if event.key == pygame.K_UP:
-                    self.acceleration = Acceleration.ACCEL
-                elif event.key == pygame.K_DOWN:
-                    self.acceleration = Acceleration.BRAKE
-            else:
-                self.acceleration = Acceleration.BASE
-                self.direction = Direction.STRAIGHT
+        if keys[pygame.K_UP]:
+            self.acceleration = Acceleration.ACCEL
+        elif keys[pygame.K_DOWN]:
+            self.acceleration = Acceleration.BRAKE
+        else:
+            self.acceleration = Acceleration.BASE
 
         action = (self.direction, self.acceleration)
         
@@ -185,7 +186,7 @@ class FormulAI:
         # Dessiner le circuit
         self.screen.fill(WHITE)
         self.screen.blit(TRACK, (0, 0))
-        
+
         # Dessiner la voiture orientée
         rotated_car = pygame.transform.rotate(CAR, self.car_angle)
         car_rect = rotated_car.get_rect(center=(self.car_x, self.car_y))
