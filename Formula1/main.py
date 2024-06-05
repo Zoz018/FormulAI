@@ -68,7 +68,7 @@ track_data = {
         "start_line_rect": pygame.Rect(977, 840, 40, 210),
         "car_x": 1035,
         "car_y": 940,
-        "information_text_position": (700, 450),
+        "information_text_position": (750, 400),
         "score_file": "scores_ovale.txt",
         "best_time" : min(read_scores("scores_ovale.txt"), default=float("inf")), # Meilleur temps du circuit
         "checkpoints" : [pygame.Rect(0,570,420,10) , pygame.Rect(960,0,10,325), pygame.Rect(1580,570,340,10), pygame.Rect(997,800,10,280)]
@@ -77,7 +77,7 @@ track_data = {
         "start_line_rect": pygame.Rect(935, 700, 10, 265),
         "car_x": 1000,
         "car_y": 800,
-        "information_text_position": (700, 350),
+        "information_text_position": (700, 330),
         "score_file": "scores_ovale_sable.txt",
         "best_time" : min(read_scores("scores_ovale_sable.txt"), default=float("inf")), # Meilleur temps du circuit
         "checkpoints" : []
@@ -175,6 +175,7 @@ def show_lap_info(count, last_time, current_time, best_time, selected_track):
     text_laps = font.render(f"Laps: {count}", True, white)
     text_last_time = font.render(f"Last Lap Time: {last_time:.2f}s", True, white)
     text_current_time = font.render(f"Current Lap Time: {current_time:.2f}s", True, white)
+    text_car_speed = font.render(f"Car speed: {car_speed*10:.2f}km/h", True, white)
     if best_time == float('inf') :
         text_best_time = font.render(f"No Lap Time",True, white)
     else :
@@ -184,6 +185,7 @@ def show_lap_info(count, last_time, current_time, best_time, selected_track):
     screen.blit(text_last_time, (information_text_position[0], information_text_position[1] + 80))
     screen.blit(text_current_time, (information_text_position[0], information_text_position[1] + 160))
     screen.blit(text_best_time, (information_text_position[0], information_text_position[1] + 240))
+    screen.blit(text_car_speed, (information_text_position[0], information_text_position[1] + 300))
 
 # Définir une classe pour représenter un bouton
 class Button:

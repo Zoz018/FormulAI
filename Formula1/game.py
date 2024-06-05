@@ -222,6 +222,7 @@ class FormulAI:
         text_laps = font.render(f"Laps: {self.count}", True, WHITE)
         text_last_time = font.render(f"Last Lap Time: {self.last_time:.2f}s", True, WHITE)
         text_current_time = font.render(f"Current Lap Time: {self.current_lap_time:.2f}s", True, WHITE)
+        text_car_speed = font.render(f"Car speed: {self.car_speed*10:.2f}km/h", True, WHITE)
         if self.best_time == float('inf') :
             text_best_time = font.render(f"No Lap Time",True, WHITE)
         else :
@@ -231,6 +232,7 @@ class FormulAI:
         self.screen.blit(text_last_time, (information_text_position[0], information_text_position[1] + 80))
         self.screen.blit(text_current_time, (information_text_position[0], information_text_position[1] + 160))
         self.screen.blit(text_best_time, (information_text_position[0], information_text_position[1] + 240))
+        self.screen.blit(text_car_speed, (information_text_position[0], information_text_position[1] + 300))
         
 if __name__ == '__main__':
     game = FormulAI()
