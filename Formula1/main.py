@@ -260,6 +260,18 @@ def show_car_pos(car_pos):
     font = pygame.font.Font(None, 74)
     text = font.render("(" + str(car_pos[0]) + "," + str(car_pos[1]) + ")", True, white)
     screen.blit(text, (10, 10))
+
+def rectRotated( surface, color, pos, fill, border_radius, angle ):
+    """
+    - angle in degree
+    """
+    max_area = max(pos[2],pos[3])
+    s = pygame.Surface((max_area,max_area))
+    s = s.convert_alpha()
+    s.fill((0,0,0,0))
+    pygame.draw.rect(s, color,(0,0,pos[2],pos[3]),fill, border_radius=border_radius)
+    s = pygame.transform.rotate(s,angle)
+    surface.blit( s, (pos[0],pos[1]) )
         
 
 # Fonction principale du jeu
@@ -384,7 +396,7 @@ def game_loop(selected_track):
         checkpoints = track_data[selected_track]["checkpoints"]
         if checkpoints != [] :
             #Déssiner les checkpoints si nécessaire
-            
+            #rectRotated(screen,blue,(0,0,900,10),False,2,30)
             pygame.draw.rect(screen, blue, checkpoints[0])
             pygame.draw.rect(screen, blue, checkpoints[1])
             pygame.draw.rect(screen, blue, checkpoints[2])
@@ -394,7 +406,7 @@ def game_loop(selected_track):
                 show_checkpoint_collision()
             
         pygame.display.update()
-        clock.tick(6000)
+        clock.tick(60)
 
 # Fonction pour afficher l'écran de lancement
 def show_launcher():
