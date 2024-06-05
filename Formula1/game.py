@@ -121,7 +121,18 @@ class FormulAI:
         
         # Checkpoint
         if self._checkpoint_collision():
-            self.next_checkpoint_id = (self.next_checkpoint_id + 1)%len(CHECKPOINTS)
+            self.next_checkpoint_id += 1
+
+            # Fin du tour
+            if self.next_checkpoint_id >= len(CHECKPOINTS):
+                self.next_checkpoint_id = 0
+                self.count += 1
+                if self.current_lap_time > self.best_time:
+                    self.best_time = self.current_lap_time
+                self.last_time = self.current_lap_time
+                self.current_lap_time = 0
+                self.start_time = time.time()
+
             self.next_checkpoint = CHECKPOINTS[self.next_checkpoint_id]
             
 
