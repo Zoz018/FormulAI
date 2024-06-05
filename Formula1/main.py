@@ -35,11 +35,12 @@ pygame.display.set_caption('Jeu de Formule 1')
 # Couleurs
 white = (255, 255, 255)
 red = (255, 0, 0)
+blue = (0,0,255)
 green = (0, 71, 0)  # Couleur des bords du circuit pour la détection des collisions
 yellow = (239, 228, 176)  # Couleur du sable
 green_launcher = (144, 238, 144)  # Couleur de fond du launcher
 black = (0, 0, 0)
-brown = (120,67,21) 
+brown = (120,67,21) #couleur des murs 
 
 # Charger les images de voitures et de circuits
 car_image = pygame.image.load('car.png')
@@ -60,7 +61,8 @@ track_data = {
         "car_y": 880,
         "information_text_position": (10, 10),
         "score_file": "scores_spa.txt",
-        "best_time" : min(read_scores("scores_spa.txt"), default=float("inf"))  # Meilleur temps du circuit
+        "best_time" : min(read_scores("scores_spa.txt"), default=float("inf")),  # Meilleur temps du circuit
+        "checkpoints" : []
     },
     "ovale": {
         "start_line_rect": pygame.Rect(977, 840, 40, 210),
@@ -68,7 +70,8 @@ track_data = {
         "car_y": 940,
         "information_text_position": (700, 450),
         "score_file": "scores_ovale.txt",
-        "best_time" : min(read_scores("scores_ovale.txt"), default=float("inf")) # Meilleur temps du circuit
+        "best_time" : min(read_scores("scores_ovale.txt"), default=float("inf")), # Meilleur temps du circuit
+        "checkpoints" : [[(0,570), (410,570)],[(960,0), (960,325)],[(1580,570), (1920,570)],[(997,800), (997,1080)]]
     },
     "ovale+sable": {
         "start_line_rect": pygame.Rect(935, 700, 10, 265),
@@ -76,7 +79,8 @@ track_data = {
         "car_y": 800,
         "information_text_position": (700, 350),
         "score_file": "scores_ovale_sable.txt",
-        "best_time" : min(read_scores("scores_ovale_sable.txt"), default=float("inf")) # Meilleur temps du circuit
+        "best_time" : min(read_scores("scores_ovale_sable.txt"), default=float("inf")), # Meilleur temps du circuit
+        "checkpoints" : []
     }
 }
 
@@ -364,6 +368,14 @@ def game_loop(selected_track):
 
         # Dessiner la ligne de départ/arrivée (commentée pour être invisible)
         #pygame.draw.rect(screen, red, start_line_rect)
+
+        # Affichage des lignes à partir des points servant à délimiter les checkpoint 
+        checkpoints = track_data[selected_track]["checkpoints"]
+        if checkpoints != [] :
+            pygame.draw.line(screen, blue, checkpoints[0][0], checkpoints[0][1])
+            pygame.draw.line(screen, blue, checkpoints[1][0], checkpoints[1][1])
+            pygame.draw.line(screen, blue, checkpoints[2][0], checkpoints[2][1])
+            pygame.draw.line(screen, blue, checkpoints[3][0],checkpoints[3][1])
 
         pygame.display.update()
         clock.tick(6000)
