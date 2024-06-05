@@ -37,6 +37,7 @@ TRACK = pygame.image.load('circuit_ovale.png')
 TRACK = pygame.transform.scale(TRACK, (1920, 1080))
 CAR = pygame.image.load('car.png')
 CAR = pygame.transform.scale(CAR, (12.5, 25))
+CHECKPOINTS = [pygame.Rect(0,570,420,40) , pygame.Rect(960,0,40,325), pygame.Rect(1580,570,340,40), pygame.Rect(997,800,40,280)]
 
 
 class FormulAI:
@@ -76,12 +77,13 @@ class FormulAI:
 
         self.start_time = time.time()
         self.current_lap_time = 0
-        self.checkpoint = None
+
+        self.next_checkpoint = CHECKPOINTS[0]
+        self.next_checkpoint_id = 0
 
         self.count = 0
         self.last_time = 0
         self.best_time = float("inf") 
-
     
     def play_step(self):
         # Récupérer les entrées de l'utilisateur
@@ -118,6 +120,11 @@ class FormulAI:
             return reward, game_over, self.current_lap_time
         
         # Checkpoint
+        if self._checkpoint_collision():
+            self.next_checkpoint_id = (self.next_checkpoint_id + 1)%len(CHECKPOINTS)
+            self.next_checkpoint = CHECKPOINTS[self.next_checkpoint_id]
+            
+
 
         # Update UI and Clock
         self._update_ui()
@@ -186,14 +193,22 @@ class FormulAI:
             pass
         
         return False
+    
+    def _checkpoint_collision(self):
+        return self.next_checkpoint.collidepoint(self.car_x, self.car_y)
+
 
     def _update_ui(self):
         # Dessiner le circuit
         self.screen.fill(WHITE)
         self.screen.blit(TRACK, (0, 0))
 
+        # Afficher le prochain checkpoint
+        pygame.draw.rect(self.screen, WHITE, self.next_checkpoint)
+
         # Afficher les informations de la partie 
         self._show_lap_info()
+
 
         # Dessiner la voiture orientée
         rotated_car = pygame.transform.rotate(CAR, self.car_angle)
