@@ -39,7 +39,7 @@ green = (0, 71, 0)  # Couleur des bords du circuit pour la détection des collis
 yellow = (239, 228, 176)  # Couleur du sable
 green_launcher = (144, 238, 144)  # Couleur de fond du launcher
 black = (0, 0, 0)
-brown = (120,67,21)
+brown = (120,67,21) 
 
 # Charger les images de voitures et de circuits
 car_image = pygame.image.load('car.png')
@@ -63,7 +63,7 @@ track_data = {
         "best_time" : min(read_scores("scores_spa.txt"), default=float("inf"))  # Meilleur temps du circuit
     },
     "ovale": {
-        "start_line_rect": pygame.Rect(992, 840, 10, 210),
+        "start_line_rect": pygame.Rect(977, 840, 40, 210),
         "car_x": 1035,
         "car_y": 940,
         "information_text_position": (700, 450),
