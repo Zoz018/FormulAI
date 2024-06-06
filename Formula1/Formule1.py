@@ -40,6 +40,13 @@ CAR = pygame.image.load('car.png')
 CAR = pygame.transform.scale(CAR, (12.5, 25))
 CHECKPOINTS = [pygame.Rect(0,570,420,40) , pygame.Rect(960,0,40,325), pygame.Rect(1580,570,340,40), pygame.Rect(997,800,40,280)]
 
+#Fonctions utiles 
+
+def distance(point1, point2):
+
+        x1, y1 = point1
+        x2, y2 = point2
+        return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
 class FormulAI:
 
@@ -81,6 +88,7 @@ class FormulAI:
 
         self.next_checkpoint = CHECKPOINTS[0]
         self.next_checkpoint_id = 0
+        self.distance_pc = distance(self.next_checkpoint.center,(self.car_x , self.car_y))
 
         self.count = 0
         self.last_time = 0
@@ -191,6 +199,10 @@ class FormulAI:
         self.car_x += self.car_speed * math.sin(math.radians(-self.car_angle))
         self.car_y -= self.car_speed * math.cos(math.radians(-self.car_angle))
 
+        #actualise la distance au prochain checkpoint
+        self.distance_pc = distance(self.next_checkpoint.center,(self.car_x , self.car_y))
+
+        
     def _is_collision(self):
         # Vérification des collisions avec les bords de l'écran et du circuit
         if self.car_x < 0 or self.car_x > self.width or self.car_y < 0 or self.car_y > self.height:
@@ -208,8 +220,7 @@ class FormulAI:
     
     def _checkpoint_collision(self):
         return self.next_checkpoint.collidepoint(self.car_x, self.car_y)
-
-
+    
     def _update_ui(self):
         # Dessiner le circuit
         self.screen.fill(WHITE)
@@ -217,7 +228,7 @@ class FormulAI:
 
         # Afficher le prochain checkpoint
         pygame.draw.rect(self.screen, WHITE, self.next_checkpoint)
-
+        
         # Afficher les informations de la partie 
         self._show_lap_info()
 
@@ -235,16 +246,18 @@ class FormulAI:
         text_last_time = font.render(f"Last Lap Time: {self.last_time:.2f}s", True, WHITE)
         text_current_time = font.render(f"Current Lap Time: {self.current_lap_time:.2f}s", True, WHITE)
         text_car_speed = font.render(f"Car speed: {self.car_speed*10:.2f}km/h", True, WHITE)
+        text_distance_prochain_checkpoint = font.render(f"Distance au prochain checkpoint: {self.distance_pc:.2f}m", True, WHITE)
         if self.best_time == float('inf') :
             text_best_time = font.render(f"No Lap Time",True, WHITE)
         else :
             text_best_time = font.render(f"Best Lap Time: {self.best_time:.2f}s", True, WHITE)
-        information_text_position = (700,450)
+        information_text_position = (750,400)
         self.screen.blit(text_laps, information_text_position)
         self.screen.blit(text_last_time, (information_text_position[0], information_text_position[1] + 80))
         self.screen.blit(text_current_time, (information_text_position[0], information_text_position[1] + 160))
         self.screen.blit(text_best_time, (information_text_position[0], information_text_position[1] + 240))
         self.screen.blit(text_car_speed, (information_text_position[0], information_text_position[1] + 300))
+        self.screen.blit(text_distance_prochain_checkpoint, (10,10))
         
 if __name__ == '__main__':
     game = FormulAI()

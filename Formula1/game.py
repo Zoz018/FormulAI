@@ -236,7 +236,7 @@ class FormulAI:
             text_best_time = font.render(f"No Lap Time",True, WHITE)
         else :
             text_best_time = font.render(f"Best Lap Time: {self.best_time:.2f}s", True, WHITE)
-        information_text_position = (700,450)
+        information_text_position = (750,400)
         self.screen.blit(text_laps, information_text_position)
         self.screen.blit(text_last_time, (information_text_position[0], information_text_position[1] + 80))
         self.screen.blit(text_current_time, (information_text_position[0], information_text_position[1] + 160))
