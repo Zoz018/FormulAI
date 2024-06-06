@@ -61,6 +61,7 @@ class FormulAI:
             
         # Initialisation de la montre
         self.clock = pygame.time.Clock()
+        self.frame = 0
 
         # Initialiser l'état du jeu
         self.reset()
@@ -70,10 +71,11 @@ class FormulAI:
         self.direction = Direction.STRAIGHT
         self.acceleration = Acceleration.BASE
 
-
+        
         self.car_x = car_x
         self.car_y = car_y
         self.car_speed = 0
+        self.car_speed_mean = 0
         self.car_angle = car_angle
 
         self.start_time = time.time()
@@ -87,6 +89,8 @@ class FormulAI:
         self.best_time = float("inf") 
     
     def play_step(self, move_dir, move_acc):
+        self.frame += 1 
+
         # Récupérer les entrées de l'utilisateur
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -110,19 +114,22 @@ class FormulAI:
         self._move(new_action)
 
         # Verifier le GameOver
-        reward = 0
+        reward = self.car_speed_mean
         game_over = False
         if self._is_collision() or self.current_lap_time > 20:
             game_over = True
             reward -= 10
-            return reward, game_over, self.current_lap_time
+            return reward, game_over, 1/self.best_time
         
         # Checkpoint
         if self._checkpoint_collision():
             self.next_checkpoint_id += 1
 
+            reward += 10
+
             # Fin du tour
             if self.next_checkpoint_id >= len(CHECKPOINTS):
+                reward += 10
                 self.next_checkpoint_id = 0
                 self.count += 1
                 if self.current_lap_time > self.best_time:
@@ -141,7 +148,7 @@ class FormulAI:
         self.current_lap_time = time.time() - self.start_time
 
         # Return game over and score
-        return reward, game_over, self.current_lap_time
+        return reward, game_over, 1/self.best_time
 
         
 
@@ -167,6 +174,8 @@ class FormulAI:
 
         if self.car_speed < 0:
             self.car_speed = 0
+
+        self.car_speed_mean = (self.car_speed_mean*(self.frame - 1) + self.car_speed)/self.frame
 
         # Calcul de la vitesse de rotation en fonction de la vitesse de la voiture
         turn_speed = TURN_SPEED * (1.5 - self.car_speed / MAX_SPEED)
@@ -243,17 +252,3 @@ class FormulAI:
         self.screen.blit(text_best_time, (information_text_position[0], information_text_position[1] + 240))
         self.screen.blit(text_car_speed, (information_text_position[0], information_text_position[1] + 300))
         
-if __name__ == '__main__':
-    game = FormulAI()
-    
-    # game loop
-    while True:
-        reward, game_over, score = game.play_step()
-        
-        if game_over == True:
-            break
-        
-    print('Final Score', score)
-        
-        
-    pygame.quit()
