@@ -7,7 +7,7 @@ from model import Linear_QNet, QTrainer
 from helper import plot
 
 MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
+BATCH_SIZE = 10000
 LR = 0.001
 
 class Agent:
@@ -35,10 +35,12 @@ class Agent:
             dir_a,
             dir_b,
             dir_n,
+
+
             game.next_checkpoint.centerx > game.car_x,
             game.next_checkpoint.centerx < game.car_x,
-            game.next_checkpoint.centerx < game.car_y,
-            game.next_checkpoint.centerx > game.car_y
+            game.next_checkpoint.centery < game.car_y,
+            game.next_checkpoint.centery > game.car_y
         ]
 
         return np.array(state, dtype=int)
@@ -67,7 +69,13 @@ class Agent:
         if random.randint(0, 200) < self.epsilon:
             # Random action
             move_dir = random.randint(0, 2)
-            move_acc = random.randint(0, 1)
+            rand_acc = random.random()
+            if rand_acc < 0.5:
+                move_acc = 0
+            elif rand_acc < 0.8:
+                move_acc = 2
+            else:
+                move_acc = 1
             final_move_dir[move_dir] = 1
             final_move_acc[move_acc] = 1
         else:
@@ -86,12 +94,12 @@ class Agent:
 
 
 def train():
-    plot_scores = []
-    plot_mean_scores = []
-    total_score = 0
+    plot_reward = []
+    plot_max_speed = []
     record = 0
     agent = Agent()
     game = FormulAI()
+    rewards = 0
     while True:
         state_old = agent.get_state(game)
         final_move_dir, final_move_acc = agent.get_action(state_old)
@@ -100,6 +108,8 @@ def train():
 
         agent.train_short_memory(state_old, final_move_dir, final_move_acc, reward, state_new, done)
         agent.remember(state_old, final_move_dir, final_move_acc, reward, state_new, done)
+
+        rewards += reward
 
         if done:
             game.reset()
@@ -110,13 +120,12 @@ def train():
                 record = score
                 agent.model.save()
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+            print('Game', agent.n_games, 'Reward', reward, 'Speed', score)
 
-            plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / agent.n_games
-            plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
+            plot_max_speed.append(score)
+            plot_reward.append(rewards)
+            rewards = 0
+            plot(plot_reward, plot_max_speed)
 
 if __name__ == '__main__':
     train()

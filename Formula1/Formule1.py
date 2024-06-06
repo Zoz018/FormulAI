@@ -41,7 +41,6 @@ CAR = pygame.transform.scale(CAR, (12.5, 25))
 CHECKPOINTS = [pygame.Rect(0,570,420,40) , pygame.Rect(960,0,40,325), pygame.Rect(1580,570,340,40), pygame.Rect(997,800,40,280)]
 
 #Fonctions utiles 
-
 def distance(point1, point2):
 
         x1, y1 = point1

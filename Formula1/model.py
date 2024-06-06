@@ -39,7 +39,7 @@ class QTrainer:
         next_state = torch.tensor(next_state, dtype=torch.float)
         action_dir = torch.tensor(action_dir, dtype=torch.long)  # Convert to tensor
         action_acc = torch.tensor(action_acc, dtype=torch.long)  # Convert to tensor
-        reward = torch.tensor(reward, dtype=torch.float)
+        reward = torch.tensor(reward, dtype=torch.int)
         done = torch.tensor(done, dtype=torch.bool)
 
         if len(state.shape) == 1:
@@ -60,13 +60,13 @@ class QTrainer:
             Q_new_dir = reward[idx]
             Q_new_acc = reward[idx]
             if not done[idx]:
-                next_pred_dir, next_pred_acc = self.model(state)
+                next_pred_dir, next_pred_acc = self.model(next_state[idx])
                 Q_new_dir = reward[idx] + self.gamma * torch.max(next_pred_dir)
                 Q_new_acc = reward[idx] + self.gamma * torch.max(next_pred_acc)
 
             target_dir[idx][torch.argmax(action_dir[idx])] = Q_new_dir
             target_acc[idx][torch.argmax(action_acc[idx])] = Q_new_acc
-            
+
         # Compute loss and perform backpropagation for both direction and acceleration
         self.optimizer.zero_grad()
         loss_dir = self.criterion(pred_dir, target_dir)

@@ -23,7 +23,7 @@ BRAKE_DECELERATION = 1
 TURN_SPEED = 7
 
 # Paramètre du jeu
-SPEED = 120
+SPEED = 60
 
 # Couleurs
 WHITE = (255, 255, 255)
@@ -40,6 +40,12 @@ CAR = pygame.image.load('car.png')
 CAR = pygame.transform.scale(CAR, (12.5, 25))
 CHECKPOINTS = [pygame.Rect(0,570,420,40) , pygame.Rect(960,0,40,325), pygame.Rect(1580,570,340,40), pygame.Rect(997,800,40,280)]
 
+#Fonctions utiles 
+def distance(point1, point2):
+
+        x1, y1 = point1
+        x2, y2 = point2
+        return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
 class FormulAI:
 
@@ -61,7 +67,7 @@ class FormulAI:
             
         # Initialisation de la montre
         self.clock = pygame.time.Clock()
-        self.frame = 0
+        
 
         # Initialiser l'état du jeu
         self.reset()
@@ -71,11 +77,12 @@ class FormulAI:
         self.direction = Direction.STRAIGHT
         self.acceleration = Acceleration.BASE
 
+        self.frame = 0
         
         self.car_x = car_x
         self.car_y = car_y
-        self.car_speed = 0
-        self.car_speed_mean = 0
+        self.car_speed = 10
+        self.car_speed_max = 0
         self.car_angle = car_angle
 
         self.start_time = time.time()
@@ -83,6 +90,7 @@ class FormulAI:
 
         self.next_checkpoint = CHECKPOINTS[0]
         self.next_checkpoint_id = 0
+        self.distance_pc = distance(self.next_checkpoint.center,(self.car_x , self.car_y))
 
         self.count = 0
         self.last_time = 0
@@ -111,25 +119,34 @@ class FormulAI:
         new_action = (action_dir, action_acc)
         
         # Faire bouger la voiture
+        old_distance_pc = self.distance_pc
+        old_car_speed = self.car_speed
         self._move(new_action)
 
+        # Initialisation de la reward
+        reward = 0
+
+        coef_acceleration = 5
+        reward += (self.car_speed - old_car_speed)*coef_acceleration
+
         # Verifier le GameOver
-        reward = self.car_speed_mean
         game_over = False
         if self._is_collision() or self.current_lap_time > 20:
             game_over = True
-            reward -= 10
-            return reward, game_over, 1/self.best_time
+            if self._is_collision():
+                reward -= 200
+            
+            reward += self.car_speed_max*(self.next_checkpoint_id + 1)*(self.count + 1) 
+            return reward, game_over, self.car_speed_max
         
         # Checkpoint
         if self._checkpoint_collision():
             self.next_checkpoint_id += 1
 
-            reward += 10
+            reward += 1000
 
             # Fin du tour
             if self.next_checkpoint_id >= len(CHECKPOINTS):
-                reward += 10
                 self.next_checkpoint_id = 0
                 self.count += 1
                 if self.current_lap_time > self.best_time:
@@ -139,7 +156,9 @@ class FormulAI:
                 self.start_time = time.time()
 
             self.next_checkpoint = CHECKPOINTS[self.next_checkpoint_id]
-            
+        else:
+            coef_proximite = 1
+            reward += (old_distance_pc - self.distance_pc)*coef_proximite
 
 
         # Update UI and Clock
@@ -148,7 +167,7 @@ class FormulAI:
         self.current_lap_time = time.time() - self.start_time
 
         # Return game over and score
-        return reward, game_over, 1/self.best_time
+        return reward, game_over, self.car_speed_max
 
         
 
@@ -161,7 +180,7 @@ class FormulAI:
         elif action[1] == Acceleration.BRAKE:
             acceleration = - BRAKE_DECELERATION
         else:
-            acceleration = 0
+            acceleration = 0.2
 
         self.car_speed += acceleration
 
@@ -175,7 +194,8 @@ class FormulAI:
         if self.car_speed < 0:
             self.car_speed = 0
 
-        self.car_speed_mean = (self.car_speed_mean*(self.frame - 1) + self.car_speed)/self.frame
+        if self.car_speed > self.car_speed_max:
+            self.car_speed_max = self.car_speed
 
         # Calcul de la vitesse de rotation en fonction de la vitesse de la voiture
         turn_speed = TURN_SPEED * (1.5 - self.car_speed / MAX_SPEED)
@@ -196,6 +216,10 @@ class FormulAI:
         # Actualiser la position de la voiture
         self.car_x += self.car_speed * math.sin(math.radians(-self.car_angle))
         self.car_y -= self.car_speed * math.cos(math.radians(-self.car_angle))
+
+        
+        # Actualise la distance au prochain checkpoint
+        self.distance_pc = distance(self.next_checkpoint.center,(self.car_x , self.car_y))
 
     def _is_collision(self):
         # Vérification des collisions avec les bords de l'écran et du circuit
@@ -241,6 +265,7 @@ class FormulAI:
         text_last_time = font.render(f"Last Lap Time: {self.last_time:.2f}s", True, WHITE)
         text_current_time = font.render(f"Current Lap Time: {self.current_lap_time:.2f}s", True, WHITE)
         text_car_speed = font.render(f"Car speed: {self.car_speed*10:.2f}km/h", True, WHITE)
+        text_distance_prochain_checkpoint = font.render(f"Checkpoint: {self.distance_pc:.2f}m", True, WHITE)
         if self.best_time == float('inf') :
             text_best_time = font.render(f"No Lap Time",True, WHITE)
         else :
@@ -251,4 +276,5 @@ class FormulAI:
         self.screen.blit(text_current_time, (information_text_position[0], information_text_position[1] + 160))
         self.screen.blit(text_best_time, (information_text_position[0], information_text_position[1] + 240))
         self.screen.blit(text_car_speed, (information_text_position[0], information_text_position[1] + 300))
+        self.screen.blit(text_distance_prochain_checkpoint, (10,10))
         
