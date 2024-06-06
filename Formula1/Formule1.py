@@ -23,7 +23,7 @@ BRAKE_DECELERATION = 1
 TURN_SPEED = 7
 
 # Paramètre du jeu
-SPEED = 120
+SPEED = 60
 
 # Couleurs
 WHITE = (255, 255, 255)
@@ -86,33 +86,36 @@ class FormulAI:
         self.last_time = 0
         self.best_time = float("inf") 
     
-    def play_step(self, move_dir, move_acc):
+    def play_step(self):
         # Récupérer les entrées de l'utilisateur
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.direction = Direction.LEFT
+        elif keys[pygame.K_RIGHT]:
+            self.direction = Direction.RIGHT
+        else:
+            self.direction = Direction.STRAIGHT
 
-        action_dir = Direction.STRAIGHT
-        action_acc = Acceleration.BASE
-        if move_dir[0] == 1:
-            action_dir = Direction.LEFT
-        elif move_dir[1] == 1:
-            action_dir = Direction.RIGHT
-        
-        if move_acc[0] == 1:
-            action_acc = Acceleration.ACCEL
-        elif move_acc[1] == 1:
-            action_acc = Acceleration.BRAKE
-        new_action = (action_dir, action_acc)
+        if keys[pygame.K_UP]:
+            self.acceleration = Acceleration.ACCEL
+        elif keys[pygame.K_DOWN]:
+            self.acceleration = Acceleration.BRAKE
+        else:
+            self.acceleration = Acceleration.BASE
+
+        action = (self.direction, self.acceleration)
         
         # Faire bouger la voiture
-        self._move(new_action)
+        self._move(action)
 
         # Verifier le GameOver
         reward = 0
         game_over = False
-        if self._is_collision() or self.current_lap_time > 20:
+        if self._is_collision():
             game_over = True
             reward -= 10
             return reward, game_over, self.current_lap_time
