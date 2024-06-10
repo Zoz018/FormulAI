@@ -7,7 +7,7 @@ from model import Linear_QNet, QTrainer
 from helper import plot
 
 MAX_MEMORY = 100_000
-BATCH_SIZE = 10000
+BATCH_SIZE = 1000
 LR = 0.001
 
 class Agent:
@@ -17,7 +17,7 @@ class Agent:
         self.epsilon = 0  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(10, 256, 3)  # 3 for direction + 3 for acceleration
+        self.model = Linear_QNet(12, 256, 3)  # 3 for direction + 3 for acceleration
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
@@ -36,6 +36,8 @@ class Agent:
             dir_b,
             dir_n,
 
+            game.car_speed/30,
+            game.car_angle/360, 
 
             game.next_checkpoint.centerx > game.car_x,
             game.next_checkpoint.centerx < game.car_x,
@@ -43,7 +45,7 @@ class Agent:
             game.next_checkpoint.centery > game.car_y
         ]
 
-        return np.array(state, dtype=int)
+        return np.array(state, dtype=float)
 
     def remember(self, state, action_dir, action_acc, reward, next_state, done):
         self.memory.append((state, action_dir, action_acc, reward, next_state, done))

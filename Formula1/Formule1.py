@@ -193,6 +193,7 @@ class FormulAI:
             turn_sign = 0
 
         self.car_angle += turn_sign*turn_speed
+        self.car_angle %= 360
 
         # Actualiser la position de la voiture
         self.car_x += self.car_speed * math.sin(math.radians(-self.car_angle))

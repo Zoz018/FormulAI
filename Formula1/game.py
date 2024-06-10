@@ -76,18 +76,21 @@ class FormulAI:
         # Initialisation de l'état du jeu
         self.direction = Direction.STRAIGHT
         self.acceleration = Acceleration.BASE
-
-        self.frame = 0
         
+        # Position
         self.car_x = car_x
         self.car_y = car_y
         self.car_speed = 10
         self.car_speed_max = 0
+
+        # Angle
         self.car_angle = car_angle
+        self.relative_turn_speed = 0
 
         self.start_time = time.time()
         self.current_lap_time = 0
-
+        self.start_time_cp = time.time()
+        self.current_cp_time = 0
         self.next_checkpoint = CHECKPOINTS[0]
         self.next_checkpoint_id = 0
         self.distance_pc = distance(self.next_checkpoint.center,(self.car_x , self.car_y))
@@ -97,7 +100,6 @@ class FormulAI:
         self.best_time = float("inf") 
     
     def play_step(self, move_dir, move_acc):
-        self.frame += 1 
 
         # Récupérer les entrées de l'utilisateur
         for event in pygame.event.get():
@@ -123,27 +125,21 @@ class FormulAI:
         old_car_speed = self.car_speed
         self._move(new_action)
 
-        # Initialisation de la reward
-        reward = 0
 
-        coef_acceleration = 5
-        reward += (self.car_speed - old_car_speed)*coef_acceleration
 
         # Verifier le GameOver
         game_over = False
-        if self._is_collision() or self.current_lap_time > 20:
+        if self._is_collision() or self.current_cp_time > 10:
             game_over = True
-            if self._is_collision():
-                reward -= 200
             
-            reward += self.car_speed_max*(self.next_checkpoint_id + 1)*(self.count + 1) 
-            return reward, game_over, self.car_speed_max
+            
         
         # Checkpoint
-        if self._checkpoint_collision():
+        elif self._checkpoint_collision():
             self.next_checkpoint_id += 1
 
-            reward += 1000
+            self.current_cp_time = 0
+            self.start_time_cp = time.time()
 
             # Fin du tour
             if self.next_checkpoint_id >= len(CHECKPOINTS):
@@ -156,16 +152,18 @@ class FormulAI:
                 self.start_time = time.time()
 
             self.next_checkpoint = CHECKPOINTS[self.next_checkpoint_id]
-        else:
-            coef_proximite = 1
-            reward += (old_distance_pc - self.distance_pc)*coef_proximite
 
 
         # Update UI and Clock
         self._update_ui()
         self.clock.tick(SPEED)
         self.current_lap_time = time.time() - self.start_time
+        self.current_cp_time = time.time() - self.start_time_cp
 
+        
+        coef_acceleration = 0.1
+        coef_proximite = 0.1
+        reward = (old_distance_pc - self.distance_pc)*coef_proximite + (self.car_speed - old_car_speed)*coef_acceleration
         # Return game over and score
         return reward, game_over, self.car_speed_max
 
@@ -211,7 +209,9 @@ class FormulAI:
         else:
             turn_sign = 0
 
-        self.car_angle += turn_sign*turn_speed
+        self.relative_turn_speed = turn_sign*turn_speed
+        self.car_angle += self.relative_turn_speed
+        self.car_angle %= 360
 
         # Actualiser la position de la voiture
         self.car_x += self.car_speed * math.sin(math.radians(-self.car_angle))
