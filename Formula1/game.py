@@ -99,7 +99,7 @@ class FormulAI:
         self.last_time = 0
         self.best_time = float("inf") 
     
-    def play_step(self, move_dir, move_acc):
+    def play_step(self, action):
 
         # Récupérer les entrées de l'utilisateur
         for event in pygame.event.get():
@@ -107,19 +107,14 @@ class FormulAI:
                 pygame.quit()
                 quit()
 
-        action_dir = Direction.STRAIGHT
-        action_acc = Acceleration.BASE
-        if move_dir[0] == 1:
-            action_dir = Direction.LEFT
-        elif move_dir[1] == 1:
-            action_dir = Direction.RIGHT
-        
-        if move_acc[0] == 1:
-            action_acc = Acceleration.ACCEL
-        elif move_acc[1] == 1:
-            action_acc = Acceleration.BRAKE
-        new_action = (action_dir, action_acc)
-        
+
+        dirs = [Direction.LEFT, Direction.STRAIGHT, Direction.RIGHT]
+        accs = [Acceleration.BRAKE, Acceleration.BASE, Acceleration.ACCEL]
+
+        dir = dirs[int(action[0]*3)]
+        acc = accs[int(action[1]*3)]
+
+        new_action = (dir, acc)
         # Faire bouger la voiture
         old_distance_pc = self.distance_pc
         old_car_speed = self.car_speed

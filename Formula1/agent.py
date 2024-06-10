@@ -17,7 +17,7 @@ class Agent:
         self.epsilon = 0  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(12, 256, 3)  # 3 for direction + 3 for acceleration
+        self.model = Linear_QNet(12, 256, 2)  # 3 for direction + 3 for acceleration
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
@@ -47,8 +47,8 @@ class Agent:
 
         return np.array(state, dtype=float)
 
-    def remember(self, state, action_dir, action_acc, reward, next_state, done):
-        self.memory.append((state, action_dir, action_acc, reward, next_state, done))
+    def remember(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
 
     def train_long_memory(self):
         if len(self.memory) > BATCH_SIZE:
@@ -56,43 +56,37 @@ class Agent:
         else:
             mini_sample = self.memory
 
-        states, actions_dir, actions_acc, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions_dir, actions_acc, rewards, next_states, dones)
+        states, action, rewards, next_states, dones = zip(*mini_sample)
+        self.trainer.train_step(states, action, rewards, next_states, dones)
 
-    def train_short_memory(self, state, action_dir, action_acc, reward, next_state, done):
-        self.trainer.train_step(state, action_dir, action_acc, reward, next_state, done)
+    def train_short_memory(self, state, action, reward, next_state, done):
+        self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
         self.epsilon = 80 - self.n_games
-        final_move_dir = [0, 0, 0]
-        final_move_acc = [0, 0, 0]
+
+        action = [0,0]
 
         if random.randint(0, 200) < self.epsilon:
             # Random action
-            move_dir = random.randint(0, 2)
-            rand_acc = random.random()
-            if rand_acc < 0.5:
-                move_acc = 0
-            elif rand_acc < 0.8:
-                move_acc = 2
-            else:
-                move_acc = 1
-            final_move_dir[move_dir] = 1
-            final_move_acc[move_acc] = 1
+            action = np.random.uniform(size=2).tolist()
         else:
             state_tensor = torch.tensor(state, dtype=torch.float)
-            pred_dir, pred_acc = self.model(state_tensor)
+            # pred_dir, pred_acc = self.model(state_tensor)
+            pred = self.model(state_tensor)
 
             # Choose the action with the highest Q-value for both direction and acceleration
-            move_dir = torch.argmax(pred_dir).item()
-            move_acc = torch.argmax(pred_acc).item()
+            # move_dir = torch.argmax(pred_dir).item()
+            # move_acc = torch.argmax(pred_acc).item()
+
+            action = pred.tolist()
 
             # Set the final moves
-            final_move_dir[move_dir] = 1
-            final_move_acc[move_acc] = 1
+            # final_move_dir[move_dir] = 1
+            # final_move_acc[move_acc] = 1
 
-        return final_move_dir, final_move_acc
+        return action
 
 
 def train():
@@ -104,12 +98,12 @@ def train():
     rewards = 0
     while True:
         state_old = agent.get_state(game)
-        final_move_dir, final_move_acc = agent.get_action(state_old)
-        reward, done, score = game.play_step(final_move_dir, final_move_acc)
+        final_move = agent.get_action(state_old)
+        reward, done, score = game.play_step(final_move)
         state_new = agent.get_state(game)
 
-        agent.train_short_memory(state_old, final_move_dir, final_move_acc, reward, state_new, done)
-        agent.remember(state_old, final_move_dir, final_move_acc, reward, state_new, done)
+        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+        agent.remember(state_old, final_move, reward, state_new, done)
 
         rewards += reward
 
