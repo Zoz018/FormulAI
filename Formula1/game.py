@@ -2,6 +2,7 @@ import pygame
 import time
 import math
 from enum import Enum
+import numpy as np
 
 
 class Direction(Enum):
@@ -42,7 +43,6 @@ CHECKPOINTS = [pygame.Rect(0,570,420,40) , pygame.Rect(960,0,40,325), pygame.Rec
 
 #Fonctions utiles 
 def distance(point1, point2):
-
         x1, y1 = point1
         x2, y2 = point2
         return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
@@ -67,34 +67,39 @@ class FormulAI:
             
         # Initialisation de la montre
         self.clock = pygame.time.Clock()
-        
 
         # Initialiser l'état du jeu
         self.reset()
 
     def reset(self, car_x=1035, car_y=940, car_angle=90):
         # Initialisation de l'état du jeu
-        self.direction = Direction.STRAIGHT
-        self.acceleration = Acceleration.BASE
+        self.direction = 0
+        self.acceleration = 0
+        self.deceleration = 0
         
         # Position
         self.car_x = car_x
         self.car_y = car_y
         self.car_speed = 10
-        self.car_speed_max = 0
+        self.mean_speed = 0 
 
         # Angle
         self.car_angle = car_angle
         self.relative_turn_speed = 0
 
+        # Time
         self.start_time = time.time()
         self.current_lap_time = 0
         self.start_time_cp = time.time()
         self.current_cp_time = 0
+
+        # Checkpoint
         self.next_checkpoint = CHECKPOINTS[0]
         self.next_checkpoint_id = 0
         self.distance_pc = distance(self.next_checkpoint.center,(self.car_x , self.car_y))
-
+        
+        # Tour 
+        self.score = 0
         self.count = 0
         self.last_time = 0
         self.best_time = float("inf") 
@@ -107,32 +112,25 @@ class FormulAI:
                 pygame.quit()
                 quit()
 
-
-        dirs = [Direction.LEFT, Direction.STRAIGHT, Direction.RIGHT]
-        accs = [Acceleration.BRAKE, Acceleration.BASE, Acceleration.ACCEL]
-
-        dir = dirs[int(action[0]*3)]
-        acc = accs[int(action[1]*3)]
-
-        new_action = (dir, acc)
-        # Faire bouger la voiture
         old_distance_pc = self.distance_pc
-        old_car_speed = self.car_speed
-        self._move(new_action)
-
-
+        
+        # Faire bouger la voiture  
+        self._move(action)
 
         # Verifier le GameOver
+        reward = 0
         game_over = False
-        if self._is_collision() or self.current_cp_time > 10:
+        if self.is_collision() or self.current_cp_time > 10:
             game_over = True
-            
-            
+            reward += -10  
+            print(reward)
+            return reward,game_over,self.score
         
         # Checkpoint
         elif self._checkpoint_collision():
             self.next_checkpoint_id += 1
-
+            self.score += 1
+            reward += 1000
             self.current_cp_time = 0
             self.start_time_cp = time.time()
 
@@ -147,94 +145,35 @@ class FormulAI:
                 self.start_time = time.time()
 
             self.next_checkpoint = CHECKPOINTS[self.next_checkpoint_id]
-
+        else :
+            reward += (self.car_speed/30 + (old_distance_pc - self.distance_pc) )/2
 
         # Update UI and Clock
         self._update_ui()
         self.clock.tick(SPEED)
         self.current_lap_time = time.time() - self.start_time
         self.current_cp_time = time.time() - self.start_time_cp
+        self.mean_speed += self.car_speed  
 
-        
-        coef_acceleration = 0.1
-        coef_proximite = 0.1
-        reward = (old_distance_pc - self.distance_pc)*coef_proximite + (self.car_speed - old_car_speed)*coef_acceleration
         # Return game over and score
-        return reward, game_over, self.car_speed_max
+        print(reward)
+        return reward, game_over, self.score
 
-        
-
-    def _move(self, action):
-        # action = (direction, acceleration)
-
-        # Calcul de l'accelération du véhicule 
-        if action[1] == Acceleration.ACCEL:
-            acceleration = ACCELERATION
-        elif action[1] == Acceleration.BRAKE:
-            acceleration = - BRAKE_DECELERATION
-        else:
-            acceleration = 0.2
-
-        self.car_speed += acceleration
-
-        deceleration = (1 + self.car_speed / MAX_SPEED) * BASE_DECELERATION
-
-        # Actualiser la vitesse de la voiture
-        self.car_speed -= deceleration
-
-        self.car_speed = min(self.car_speed, MAX_SPEED)
-
-        if self.car_speed < 0:
-            self.car_speed = 0
-
-        if self.car_speed > self.car_speed_max:
-            self.car_speed_max = self.car_speed
-
-        # Calcul de la vitesse de rotation en fonction de la vitesse de la voiture
-        turn_speed = TURN_SPEED * (1.5 - self.car_speed / MAX_SPEED)
-        if turn_speed < 1:  # Pour éviter que la voiture ne tourne pas du tout à haute vitesse
-            turn_speed = 1  # Valeur minimale pour une sensibilité de direction constante
-        if self.car_speed == 0:
-            turn_speed = 0
-
-        if action[0] == Direction.LEFT:
-            turn_sign = 1
-        elif action[0] == Direction.RIGHT:
-            turn_sign = -1
-        else:
-            turn_sign = 0
-
-        self.relative_turn_speed = turn_sign*turn_speed
-        self.car_angle += self.relative_turn_speed
-        self.car_angle %= 360
-
-        # Actualiser la position de la voiture
-        self.car_x += self.car_speed * math.sin(math.radians(-self.car_angle))
-        self.car_y -= self.car_speed * math.cos(math.radians(-self.car_angle))
-
-        
-        # Actualise la distance au prochain checkpoint
-        self.distance_pc = distance(self.next_checkpoint.center,(self.car_x , self.car_y))
-
-    def _is_collision(self):
-        # Vérification des collisions avec les bords de l'écran et du circuit
-        if self.car_x < 0 or self.car_x > self.width or self.car_y < 0 or self.car_y > self.height:
-            return True
-
-        # Vérification des collisions avec les bords du circuit (vert)
-        try:
-            pixelColor = TRACK.get_at((int(self.car_x), int(self.car_y)))
-            if pixelColor == GREEN or pixelColor == BROWN:
+    def is_collision(self):
+            # Vérification des collisions avec les bords de l'écran et du circuit
+            if self.car_x < 0 or self.car_x > self.width or self.car_y < 0 or self.car_y > self.height:
                 return True
-        except IndexError:
-            pass
-        
-        return False
+
+            # Vérification des collisions avec les bords du circuit (vert)
+            try:
+                pixelColor = TRACK.get_at((int(self.car_x), int(self.car_y)))
+                if pixelColor == GREEN or pixelColor == BROWN:
+                    return True
+            except IndexError:
+                pass
+            
+            return False
     
-    def _checkpoint_collision(self):
-        return self.next_checkpoint.collidepoint(self.car_x, self.car_y)
-
-
     def _update_ui(self):
         # Dessiner le circuit
         self.screen.fill(WHITE)
@@ -253,6 +192,67 @@ class FormulAI:
         self.screen.blit(rotated_car, car_rect.topleft)
         pygame.display.update()
 
+    def _checkpoint_collision(self):
+        return self.next_checkpoint.collidepoint(self.car_x, self.car_y)
+
+    def _move(self, action):
+        #[[Acceleration.ACCEL , Direction.RIGHT],
+        #[Acceleration.ACCEL, Direction.STRAIGHT],
+        #[Acceleration.ACCEL, Direction.LEFT],
+        #[Acceleration.BASE, Direction.RIGHT],
+        #[Acceleration.BASE, Direction.STRAIGHT],
+        #[Acceleration.BASE, Direction.LEFT],
+        #[Acceleration.BRAKE, Direction.RIGHT],
+        #[Acceleration.BRAKE, Direction.STRAIGHT],
+        #[Acceleration.BRAKE, Direction.LEFT],]
+
+        # Calcul de l'accelération du véhicule 
+        if np.array_equal(action, [1,0,0,0,0,0,0,0,0]) or np.array_equal(action, [0,1,0,0,0,0,0,0,0]) or np.array_equal(action, [0,0,1,0,0,0,0,0,0]):
+            self.acceleration = ACCELERATION
+        elif np.array_equal(action, [0,0,0,0,0,0,1,0,0]) or np.array_equal(action, [0,0,0,0,0,0,0,1,0]) or np.array_equal(action, [0,0,0,0,0,0,0,0,1]):
+            self.acceleration = - BRAKE_DECELERATION 
+        else:
+            self.acceleration = BASE_DECELERATION
+
+        self.car_speed += self.acceleration
+
+        self.deceleration = (1 + self.car_speed / MAX_SPEED) * BASE_DECELERATION
+
+        # Actualiser la vitesse de la voiture
+        self.car_speed -= self.deceleration
+
+        self.car_speed = min(self.car_speed, MAX_SPEED)
+
+        if self.car_speed < 0:
+            self.car_speed = 0
+
+        # Calcul de la vitesse de rotation en fonction de la vitesse de la voiture
+        turn_speed = TURN_SPEED * (1.5 - self.car_speed / MAX_SPEED)
+
+        if turn_speed < 1:  # Pour éviter que la voiture ne tourne pas du tout à haute vitesse
+            turn_speed = 1  # Valeur minimale pour une sensibilité de direction constante
+        if self.car_speed == 0:
+            turn_speed = 0
+
+        if np.array_equal(action, [0,0,1,0,0,0,0,0,0]) or np.array_equal(action, [0,0,0,0,0,1,0,0,0]) or np.array_equal(action, [0,0,0,0,0,0,0,0,1]):
+            self.direction = 1 
+        elif np.array_equal(action, [1,0,0,0,0,0,0,0,0]) or np.array_equal(action, [0,0,0,1,0,0,0,0,0]) or np.array_equal(action, [0,0,0,0,0,0,1,0,0]):
+            self.direction = -1
+        else:
+            self.direction = 0
+
+        self.relative_turn_speed = self.direction*turn_speed
+        self.car_angle += self.relative_turn_speed
+        self.car_angle %= 360
+
+        # Actualiser la position de la voiture
+        self.car_x += self.car_speed * math.sin(math.radians(-self.car_angle))
+        self.car_y -= self.car_speed * math.cos(math.radians(-self.car_angle))
+
+        # Actualise la distance au prochain checkpoint
+        self.distance_pc = distance(self.next_checkpoint.center,(self.car_x , self.car_y))
+
+    
     # Fonction pour afficher le compteur de tours et le temps du tour précédent
     def _show_lap_info(self): 
         font = pygame.font.Font(None, 74)

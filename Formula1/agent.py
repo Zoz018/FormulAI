@@ -5,7 +5,10 @@ from collections import deque
 from game import FormulAI, Direction, Acceleration
 from model import Linear_QNet, QTrainer
 from helper import plot
+import pygame
 
+TRACK = pygame.image.load('circuit_ovale.png')
+TRACK = pygame.transform.scale(TRACK, (1920, 1080))
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
@@ -17,34 +20,37 @@ class Agent:
         self.epsilon = 0  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(12, 256, 2)  # 3 for direction + 3 for acceleration
+        self.model = Linear_QNet(11, 256, 9)  # 9 actions possibles 
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
-        dir_l = game.direction == Direction.LEFT
-        dir_r = game.direction == Direction.RIGHT
-        dir_s = game.direction == Direction.STRAIGHT
-        dir_a = game.acceleration == Acceleration.ACCEL
-        dir_b = game.acceleration == Acceleration.BRAKE
-        dir_n = game.acceleration == Acceleration.BASE
+
+        point_1 = (game.car_x - 20, game.car_y)
+        point_2 = (game.car_x + 20, game.car_y)
+        point_3 = (game.car_x, game.car_y - 20)
+        point_4 = (game.car_x, game.car_y + 20)
 
         state = [
-            dir_l,
-            dir_r,
-            dir_s,
-            dir_a,
-            dir_b,
-            dir_n,
 
-            game.car_speed/30,
-            game.car_angle/360, 
+            game.acceleration,
+            game.deceleration,
+            game.relative_turn_speed,
 
+            game.car_angle,
+            game.car_x,
+            game.car_y,
+
+            game.is_collision(),
+
+            game.next_checkpoint.centery < game.car_y,
+            game.next_checkpoint.centery > game.car_y,
             game.next_checkpoint.centerx > game.car_x,
             game.next_checkpoint.centerx < game.car_x,
-            game.next_checkpoint.centery < game.car_y,
-            game.next_checkpoint.centery > game.car_y
-        ]
 
+            TRACK.get_at((int(self.car_x), int(self.car_y)))
+        ]
+        
+        #print(np.array(state, dtype=float))
         return np.array(state, dtype=float)
 
     def remember(self, state, action, reward, next_state, done):
@@ -64,48 +70,48 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 80 - self.n_games
-
-        action = [0,0]
+        self.epsilon = 200 - self.n_games
+        final_move = [0,0,0,0,0,0,0,0,0]
 
         if random.randint(0, 200) < self.epsilon:
             # Random action
-            action = np.random.uniform(size=2).tolist()
+            move = random.random()
+            if move < 0.8 :
+                move = random.randint(0,2)
+            elif move <0.95 :
+                move = random.randint(3,5)
+            else :
+                move = random.randint(6,8)
+            final_move[move] = 1
+
         else:
-            state_tensor = torch.tensor(state, dtype=torch.float)
-            # pred_dir, pred_acc = self.model(state_tensor)
-            pred = self.model(state_tensor)
+            state0 = torch.tensor(state, dtype=torch.float)
+            prediction = self.model(state0)
+            move = torch.argmax(prediction).item()
+            final_move[move] = 1
 
-            # Choose the action with the highest Q-value for both direction and acceleration
-            # move_dir = torch.argmax(pred_dir).item()
-            # move_acc = torch.argmax(pred_acc).item()
-
-            action = pred.tolist()
-
-            # Set the final moves
-            # final_move_dir[move_dir] = 1
-            # final_move_acc[move_acc] = 1
-
-        return action
+        return final_move
 
 
 def train():
-    plot_reward = []
-    plot_max_speed = []
+    plot_scores = []
+    plot_mean_scores = []
+    total_score = 0
     record = 0
     agent = Agent()
     game = FormulAI()
-    rewards = 0
     while True:
+
         state_old = agent.get_state(game)
+
         final_move = agent.get_action(state_old)
+
         reward, done, score = game.play_step(final_move)
         state_new = agent.get_state(game)
 
         agent.train_short_memory(state_old, final_move, reward, state_new, done)
-        agent.remember(state_old, final_move, reward, state_new, done)
 
-        rewards += reward
+        agent.remember(state_old, final_move, reward, state_new, done)
 
         if done:
             game.reset()
@@ -116,12 +122,13 @@ def train():
                 record = score
                 agent.model.save()
 
-            print('Game', agent.n_games, 'Reward', reward, 'Speed', score)
+            print('Game', agent.n_games, 'Score', score, 'Record', record)
 
-            plot_max_speed.append(score)
-            plot_reward.append(rewards)
-            rewards = 0
-            plot(plot_reward, plot_max_speed)
+            plot_scores.append(score)
+            total_score += score
+            mean_score = total_score / agent.n_games
+            plot_mean_scores.append(mean_score)
+            plot(plot_scores, plot_mean_scores)
 
 if __name__ == '__main__':
     train()

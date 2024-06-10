@@ -9,16 +9,11 @@ class Linear_QNet(nn.Module):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size)
         self.linear2 = nn.Linear(hidden_size, output_size)
-        # self.linear_dir = nn.Linear(hidden_size, output_size)  # Output layer for direction
-        # self.linear_acc = nn.Linear(hidden_size, output_size)  # Output layer for acceleration
 
     def forward(self, x):
         x = F.relu(self.linear1(x))
-        output = F.sigmoid(self.linear2(x))
-        # dir_output = F.sigmoid(self.linear_dir(x))  # Direction output
-        # acc_output = F.sigmoid(self.linear_acc(x))  # Acceleration output
-        # return dir_output, acc_output
-        return output
+        x = F.sigmoid(self.linear2(x))
+        return x
 
     def save(self, file_name='model.pth'):
         model_folder_path = './model'
@@ -59,11 +54,9 @@ class QTrainer:
         for idx in range(len(done)):
             Q_new = reward[idx]
             if not done[idx]:
-                next_pred = self.model(next_state[idx])
-                Q_new = reward[idx] + self.gamma * torch.max(next_pred)
+                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
               
-
-            target[idx][torch.argmax(action[idx])] = Q_new
+            target[idx][torch.argmax(action[idx]).item()] = Q_new
 
         # Compute loss and perform backpropagation for both direction and acceleration
         self.optimizer.zero_grad()
