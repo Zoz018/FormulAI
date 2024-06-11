@@ -71,7 +71,7 @@ class FormulAI:
         # Initialiser l'état du jeu
         self.reset()
 
-    def reset(self, car_x=1035, car_y=940, car_angle=90):
+    def reset(self, car_x=1035, car_y=940, car_angle=-40):
         # Initialisation de l'état du jeu
         self.direction = Direction.STRAIGHT
         self.acceleration = Acceleration.BASE
