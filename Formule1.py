@@ -34,9 +34,9 @@ BLACK = (0, 0, 0)
 BROWN = (120,67,21) 
 
 # Détails du circuit
-TRACK = pygame.image.load('circuit_ovale.png')
+TRACK = pygame.image.load('assets/circuits/circuit_ovale.png')
 TRACK = pygame.transform.scale(TRACK, (1920, 1080))
-CAR = pygame.image.load('car.png')
+CAR = pygame.image.load('assets/car.png')
 CAR = pygame.transform.scale(CAR, (12.5, 25))
 CHECKPOINTS = [pygame.Rect(0,570,420,40) , pygame.Rect(960,0,40,325), pygame.Rect(1580,570,340,40), pygame.Rect(997,800,40,280)]
 

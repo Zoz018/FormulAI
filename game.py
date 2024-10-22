@@ -36,9 +36,9 @@ GRAY = (41,41,41) # couleur de la piste
 
 # Load Track and Car
 try:
-    TRACK = pygame.image.load('circuit_ovale.png')
+    TRACK = pygame.image.load('assets/circuits/circuit_ovale.png')
     TRACK = pygame.transform.scale(TRACK, (1920, 1080))
-    CAR = pygame.image.load('car.png')
+    CAR = pygame.image.load('assets/car.png')
     CAR = pygame.transform.scale(CAR, (25/2, 50/2))  # Adjusted car dimensions
 except pygame.error as e:
     print(f"Failed to load images: {e}")

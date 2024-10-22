@@ -43,12 +43,12 @@ black = (0, 0, 0)
 brown = (120,67,21) #couleur des murs 
 
 # Charger les images de voitures et de circuits
-car_image = pygame.image.load('car.png')
+car_image = pygame.image.load('assets/car.png')
 car_image = pygame.transform.scale(car_image, (12.5, 25))
 track_images = {
-    "spa": pygame.image.load('circuit_spa.png'),
-    "ovale": pygame.image.load('circuit_ovale.png'),
-    "ovale+sable": pygame.image.load('circuit_ovale_sable.png')
+    "spa": pygame.image.load('assets/circuits/circuit_spa.png'),
+    "ovale": pygame.image.load('assets/circuits/circuit_ovale.png'),
+    "ovale+sable": pygame.image.load('assets/circuits/circuit_ovale_sable.png')
 }
 for key in track_images:
     track_images[key] = pygame.transform.scale(track_images[key], (1920, 1080))
@@ -60,8 +60,8 @@ track_data = {
         "car_x": 455,
         "car_y": 880,
         "information_text_position": (10, 10),
-        "score_file": "scores_spa.txt",
-        "best_time" : min(read_scores("scores_spa.txt"), default=float("inf")),  # Meilleur temps du circuit
+        "score_file": "scores/scores_spa.txt",
+        "best_time" : min(read_scores("scores/scores_spa.txt"), default=float("inf")),  # Meilleur temps du circuit
         "checkpoints" : []
     },
     "ovale": {
@@ -69,8 +69,8 @@ track_data = {
         "car_x": 1035,
         "car_y": 940,
         "information_text_position": (750, 400),
-        "score_file": "scores_ovale.txt",
-        "best_time" : min(read_scores("scores_ovale.txt"), default=float("inf")), # Meilleur temps du circuit
+        "score_file": "scores/scores_ovale.txt",
+        "best_time" : min(read_scores("scores/scores_ovale.txt"), default=float("inf")), # Meilleur temps du circuit
         "checkpoints" : [pygame.Rect(0,570,420,10) , pygame.Rect(960,0,10,325), pygame.Rect(1580,570,340,10), pygame.Rect(997,800,10,280)]
     },
     "ovale+sable": {
@@ -78,8 +78,8 @@ track_data = {
         "car_x": 1000,
         "car_y": 800,
         "information_text_position": (700, 330),
-        "score_file": "scores_ovale_sable.txt",
-        "best_time" : min(read_scores("scores_ovale_sable.txt"), default=float("inf")), # Meilleur temps du circuit
+        "score_file": "scores/scores_ovale_sable.txt",
+        "best_time" : min(read_scores("scores/scores_ovale_sable.txt"), default=float("inf")), # Meilleur temps du circuit
         "checkpoints" : []
     }
 }
