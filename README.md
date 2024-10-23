@@ -55,6 +55,12 @@ To train the reinforcement learning agent, use the following command:
 python train.py
 ```
 
+### Old version
+You can play an old version of the game with more features manually by running the following command:
+```bash
+python main.py
+```
+
 ## Project Structure
 
 - `Formule1.py`: Script for playing the game manually.
