@@ -28,8 +28,8 @@ The reinforcement learning algorithm uses the **PyTorch** library for training n
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your_username/formulAI.git
-   cd formulAI
+   git clone https://github.com/Zoz018/FormulAI.git
+   cd FormulAI
    ```
 
 2. **Install dependencies:**
@@ -46,7 +46,7 @@ The reinforcement learning algorithm uses the **PyTorch** library for training n
 ### Playing the Game
 You can play the game manually by running the following command:
 ```bash
-python Formule1.py
+python play.py
 ```
 
 ### Training the Agent
