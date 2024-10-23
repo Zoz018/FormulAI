@@ -2,6 +2,8 @@
 
 FormulAI is a reinforcement learning project that enables a Formula 1 race car to drive autonomously in a 2D simulation environment. The game simulates a top-down view with a fixed camera, providing an ideal setting for testing and refining reinforcement learning techniques. Additionally, the game is playable by human players and is built using Pygame.
 
+![Game view](assets/images/illustration.png)
+
 ## Table of Contents
 1. [Description](#description)
 2. [Technologies](#technologies)
